@@ -136,9 +136,9 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
-  /* definition and creation of uartQueue */
-  osMessageQDef(uartQueue, 256, uint8_t);
-  uartRxQueueHandle = osMessageCreate(osMessageQ(uartQueue), NULL);
+  /* definition and creation of uartRxQueue */
+  osMessageQDef(uartRxQueue, 256, uint8_t);
+  uartRxQueueHandle = osMessageCreate(osMessageQ(uartRxQueue), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
