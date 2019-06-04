@@ -82,6 +82,7 @@ static uint8_t IwdgTaskTable = 0;
 
 
 /* USER CODE END Variables */
+osThreadId McuBasicTaskHandle;
 osThreadId HostDecodeTaskHandle;
 osMessageQId uartRxQueueHandle;
 osMutexId UartWriteMutexHandle;
@@ -99,7 +100,8 @@ void HostCmdProcess(uint8_t *Buf, uint16_t Len);
 
 /* USER CODE END FunctionPrototypes */
 
-void StartDefaultTask(void const * argument);
+void StartMcuBasicTask(void const * argument);
+void StartHostDecodeTask(void const * argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -145,8 +147,12 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
+  /* definition and creation of McuBasicTask */
+  osThreadDef(McuBasicTask, StartMcuBasicTask, osPriorityNormal, 0, 128);
+  McuBasicTaskHandle = osThreadCreate(osThread(McuBasicTask), NULL);
+
   /* definition and creation of HostDecodeTask */
-  osThreadDef(HostDecodeTask, StartDefaultTask, osPriorityNormal, 0, 256);
+  osThreadDef(HostDecodeTask, StartHostDecodeTask, osPriorityNormal, 0, 256);
   HostDecodeTaskHandle = osThreadCreate(osThread(HostDecodeTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -155,20 +161,42 @@ void MX_FREERTOS_Init(void) {
 
 }
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_StartMcuBasicTask */
 /**
-  * @brief  Function implementing the defaultTask thread.
+  * @brief  Function implementing the McuBasicTask thread.
   * @param  argument: Not used 
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
+/* USER CODE END Header_StartMcuBasicTask */
+void StartMcuBasicTask(void const * argument)
 {
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
 
-  /* USER CODE BEGIN StartDefaultTask */
+  /* USER CODE BEGIN StartMcuBasicTask */
+  uint8_t fwdgId;
+  
+  fwdgId = TaskFeedIwdgRegister();
+
   /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+    TaskFeedIwdg(fwdgId);
+  }
+  /* USER CODE END StartMcuBasicTask */
+}
+
+/* USER CODE BEGIN Header_StartHostDecodeTask */
+/**
+* @brief Function implementing the HostDecodeTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartHostDecodeTask */
+void StartHostDecodeTask(void const * argument)
+{
+  /* USER CODE BEGIN StartHostDecodeTask */
   uint8_t fwdgId;
   uint8_t data;
     
@@ -178,7 +206,7 @@ void StartDefaultTask(void const * argument)
   uartRxDecodeInfo.ProtocolDecode = HostCmdProcess;
   
   dbgprintf("Start HostDecode task\n");
-  
+
   /* Infinite loop */
   for(;;)
   {
@@ -196,8 +224,7 @@ void StartDefaultTask(void const * argument)
     
     TaskFeedIwdg(fwdgId);
   }
-
-  /* USER CODE END StartDefaultTask */
+  /* USER CODE END StartHostDecodeTask */
 }
 
 /* Private application code --------------------------------------------------*/
