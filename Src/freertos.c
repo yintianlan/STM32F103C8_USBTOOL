@@ -25,12 +25,11 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */     
-#include <stdio.h>
-#include <string.h>
+/* USER CODE BEGIN Includes */
 #include "iwdg.h"
 #include "usbd_cdc_if.h"
 #include "gpio.h"
+#include "slaveTool.h"
 
 /* USER CODE END Includes */
 
@@ -53,13 +52,6 @@ typedef struct
     uint16_t            Pin;
 }tGPIODef;
 
-#if DEBUG
-#define dbgprintf(fmt, ...)                do{\
-                                                printf(fmt, ##__VA_ARGS__);\
-                                                }while(0)
-#else
-#define dbgprintf(fmt, ...)                do{}while(0)
-#endif
 
 /* USER CODE END PTD */
 
@@ -175,6 +167,7 @@ void StartMcuBasicTask(void const * argument)
 
   /* USER CODE BEGIN StartMcuBasicTask */
   uint8_t fwdgId;
+  static uint32_t dogTimer;
   
   fwdgId = TaskFeedIwdgRegister();
 
@@ -182,7 +175,15 @@ void StartMcuBasicTask(void const * argument)
   for(;;)
   {
     osDelay(1);
-    TaskFeedIwdg(fwdgId);
+	
+	//基本任务
+	McuBasicTaskProc();
+	
+	if(ReadUserTimer(&dogTimer) >= T_100MS * 10)
+	{
+	    TaskFeedIwdg(fwdgId);
+	    ResetUserTimer(&dogTimer);
+	}
   }
   /* USER CODE END StartMcuBasicTask */
 }
@@ -203,6 +204,7 @@ void StartHostDecodeTask(void const * argument)
   fwdgId = TaskFeedIwdgRegister();
   
   /*Init interface*/
+  /*Process host command*/
   uartRxDecodeInfo.ProtocolDecode = HostCmdProcess;
   
   dbgprintf("Start HostDecode task\n");
@@ -268,88 +270,6 @@ void TaskFeedIwdg(uint8_t taskId)
     else
     {
 
-    }
-}
-
-/*Process host command*/
-void HostCmdProcess(uint8_t *Buf, uint16_t Len)
-{
-    uint8_t *Cmd;
-    Cmd = Buf;
-    
-    dbgprintf("Process CMD %#02X\n", Cmd[0]);
-    
-    switch(Cmd[0])
-    {
-        case 0x00:
-        {
-
-        }
-        break;
-        
-        case 0x01:
-        {
-            if(Cmd[1] == 0xFF)
-            {
-                /*System reset*/
-                uint8_t ack[] = {0x01, 0xFF, 0x00};
-				uint32_t msTimer;
-				
-                dbgprintf("System reset...\n");
-                UartTransmitDataToHost(ack, sizeof(ack));
-                msTimer = Cmd[2] <<8 | Cmd[3];
-				
-				HAL_Delay(msTimer);
-                HAL_NVIC_SystemReset();
-            }
-			
-			if((Cmd[1] == 0x01) && (Cmd[2] == 0x01))
-            {
-                /*Got ping*/
-                uint8_t ack[] = {0x01, 0x01, 0x00};
-                dbgprintf("Got ping...\n");
-                UartTransmitDataToHost(ack, sizeof(ack));
-            }
-        }
-        break;
-        
-        case 0x0A:
-        {
-		  	//
-		  	if(Cmd[1] == 0x01)
-			{
-			}
-			
-		  	//
-		  	if(Cmd[1] == 0x0D)
-			{
-			}
-			
-		  	//
-		  	if(Cmd[1] == 0xAD)
-			{
-			}			
-        }
-        break;
-        
-        case 0x0B:
-        {
-		  	//
-		  	if(Cmd[1] == 0x02)
-			{
-			}
-			
-		  	//
-		  	if(Cmd[1] == 0x03)
-			{
-			}
-			
-		  	//
-		  	if(Cmd[1] == 0x04)
-			{
-			}
-		}
-        break;
     }
 }
 

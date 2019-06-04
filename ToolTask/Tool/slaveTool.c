@@ -1,8 +1,9 @@
 /*****************************************************************************
-1.(主Node Task)
-
+1.(主 Task)
+2.(从 )
 ******************************************************************************/
 #include "slaveTool.h"
+#include "stm32f1xx_hal.h"
 
 
 static BOOL rebootFlag = FALSE;
@@ -11,15 +12,59 @@ static uint32_t rebootTime;
 static BOOL heartFlag = FALSE;
 static uint32_t PingSendTimer;
 
+
+extern BaseType_t UartTransmitDataToHost(uint8_t * Buf, uint16_t Len);
+
 /*****************************************************************************
-**Name: 		NodeTransmit
-**Function:	数据上行通道,结点只通过CAN与网关通讯，不用串口
+**Name:		 	ReadUserTimer
+**Function:
 **Args:
 **Return:
 ******************************************************************************/
-void UsbTransmit(uint8 *arg, uint32_t size,  void * const pBaseInfo)
+void ResetUserTimer(uint32_t *Timer)
 {
+	*Timer = HAL_GetTick();
+}
+/*****************************************************************************
+**Name:		 	ReadUserTimer
+**Function:
+**Args:
+**Return:
+******************************************************************************/
+uint32_t ReadUserTimer(uint32_t *Timer)
+{
+	uint32_t tmp = HAL_GetTick();
+	return (*Timer <= tmp) ? (tmp - *Timer) : (0xFFFFFFFF - tmp + *Timer);
+}
+/*****************************************************************************
+**Name:		 	Delay1ms
+**Function:
+**Args:
+**Return:
+******************************************************************************/
+void Delay1ms(volatile uint32_t nTime)
+{
+	HAL_Delay(nTime);
+}
 
+/*****************************************************************************
+**Name:		 	SendHeartBeatToHost
+**Function: 发送心跳函数
+**Args:
+**Return:
+******************************************************************************/
+void SendHeartBeatToHost(void)
+{
+	/*心跳*/
+	uint8 sendBuf[] = {0x01, 0x01, 0xFF};
+	static uint32_t timer;
+
+	if(ReadUserTimer(&timer) >= T_100MS * 10)
+	{
+		UartTransmitDataToHost(sendBuf, sizeof(sendBuf));
+
+		ResetUserTimer(&timer);
+	}
 }
 
 /*****************************************************************************
@@ -28,15 +73,15 @@ void UsbTransmit(uint8 *arg, uint32_t size,  void * const pBaseInfo)
 **Args:
 **Return:
 ******************************************************************************/
-void HeartBeatCheck(unsigned char * const pCAN_RxData, void * const pBaseInfo)
+void HeartBeatCheck(unsigned char * const pCAN_RxData)
 {
 	if ((pCAN_RxData[1] == 0x01) && (pCAN_RxData[2] == 0x01) )
 	{
 		/* code */
 		heartFlag = TRUE;
-		uint8 sendBuf[] = {0xAC, 0x10, 0x01, 0x01};
-		UsbTransmit(sendBuf, sizeof(sendBuf), pBaseInfo);
-		FlyResetUserTimer(&PingSendTimer);
+//		uint8 sendBuf[] = {0xAC, 0x10, 0x01, 0x01};
+//		UartTransmitDataToHost(sendBuf, sizeof(sendBuf));
+		ResetUserTimer(&PingSendTimer);
 	}
 	else
 	{
@@ -52,20 +97,18 @@ void HeartBeatCheck(unsigned char * const pCAN_RxData, void * const pBaseInfo)
 ******************************************************************************/
 void IsHeartBroken(void)
 {
-	if(0)
+	if(heartFlag == FALSE)
 	{
-		FlyResetUserTimer(&PingSendTimer);
+		ResetUserTimer(&PingSendTimer);
 	}
 	else
 	{
-		if((heartFlag == TRUE) && (FlyReadUserTimer(&PingSendTimer) >= T_1S * 20))
+		if((heartFlag == TRUE) && (ReadUserTimer(&PingSendTimer) >= T_1S * 15))
 		{
 			heartFlag = FALSE;
-			FlyResetUserTimer(&PingSendTimer);
 		}
 	}
 }
-
 
 /*****************************************************************************
 **Name:		 	RebootDevice
@@ -79,111 +122,140 @@ void RebootDevice()
 
 	if(rebootFlag == FALSE)
 	{
-		FlyResetUserTimer(&rebootSystemTimer);
+		ResetUserTimer(&rebootSystemTimer);
 	}
 	else
 	{
-		if(FlyReadUserTimer(&rebootSystemTimer) >= rebootTime)
+		if(ReadUserTimer(&rebootSystemTimer) >= rebootTime)
 		{
 			HAL_NVIC_SystemReset();
-			FlyResetUserTimer(&rebootSystemTimer);
+			ResetUserTimer(&rebootSystemTimer);
 		}
 	}
 }
-
-/**
-  * @brief  从数据流中解析出数据帧并调用解析回调函数;
-  			协议帧:0xff--0x55--length--datatype--data--checksum.
-  * @param  pData 待解析的数据流的首地址.
-  * @param  length 数据流的长度.
-  * @param  baseInfo 基本接口信息，包含回调函数.
-  * @retval 解析的结果，0 未解析完成; 0xf0 校验计算错误; 0xf0 获取到了有效数据.
-  */
-int HostRxDecode(unsigned char * const pData, unsigned short length, void * const pBaseInfo)
-{
-
-	/*Default return*/
-	return 0x00;
-}
-
 
 /**
   * @brief  解析host协议.
-  * @param	pData 一帧数据中数据部分的首地址.
-  * @param	length 该数据帧包含的数据长度.
-  * @param	pBaseInfo 全局基本信息.
+  * @param	Buf 一帧数据中数据部分的首地址.
+  * @param	Len 该数据帧包含的数据长度.
   * @retval Null.
   */
-void HostCmdProc(unsigned char * const pData, unsigned short length, void * const pBaseInfo)
+void HostCmdProcess(uint8_t *Buf, uint16_t Len)
 {
-	switch(pData[0])
-	{
-		case 0x00:
-			break;
+    uint8_t *Cmd;
+    Cmd = Buf;
+    
+    dbgprintf("Process CMD %#02X\n", Cmd[0]);
+    
+    switch(Cmd[0])
+    {
+        case 0x00:
+        break;
+        
+        case 0x01:
+        {
+            if(Cmd[1] == 0xFF)
+            {
+                /*System reset*/
+                uint8_t ack[] = {0x01, 0xFF, 0x00};
+				
+                dbgprintf("System reset...\n");
+                UartTransmitDataToHost(ack, sizeof(ack));
 
-		default:
+				rebootFlag = TRUE;
+				rebootTime = Cmd[2] <<8 | Cmd[3];
+            }
+			
+			if((Cmd[1] == 0x01) && (Cmd[2] == 0x01))
+            {
+                /*Got ping*/
+                uint8_t ack[] = {0x01, 0x01, 0x00};
+                dbgprintf("Got ping...\n");
+                UartTransmitDataToHost(ack, sizeof(ack));
+            }
+        }
+        break;
+        
+        case 0x0A:
+        {
+		  	//
+		  	if(Cmd[1] == 0x01)
 			{
 			}
-			break;
-	}
-
-	/*Return ack to host; Ack = 0xAC + original protocol */
-	if(pData[0] != 0xAC)
-	{
-		uint16 count;
-		uint8 checksum;
-		uint8 sendBuf[4] = {0xff, 0x55, length, 0xAC};
-
-		checksum = length;
-		checksum += 0xAC;
-		for(count = 0; count < length - 2; count++)
-		{
-			checksum += pData[count];
+			
+		  	//
+		  	if(Cmd[1] == 0x0D)
+			{
+			}
+			
+		  	//
+		  	if(Cmd[1] == 0xAD)
+			{
+			}			
+        }
+        break;
+        
+        case 0x0B:
+        {
+		  	//
+		  	if(Cmd[1] == 0x02)
+			{
+			}
+			
+		  	//
+		  	if(Cmd[1] == 0x03)
+			{
+			}
+			
+		  	//
+		  	if(Cmd[1] == 0x04)
+			{
+			}
 		}
+        break;
+		
+        case 0xAC:
+        {
 
-		FlyUartTransmit(PORT_TO_HOST, sendBuf, 4);
-		FlyUartTransmit(PORT_TO_HOST, pData, length - 2);
-		FlyUartTransmit(PORT_TO_HOST, &checksum, 1);
-	}
+        }
+        break;
+		
+		default:
+			break;
+    }
 }
-
-
+	
 /**
   * @brief  基本任务.
-  * @param	pBaseInfo 全局基本信息.
   * @retval Null.
   */
-void McuBasicTaskProc(void * const pBaseInfo)
+void McuBasicTaskProc(void)
 {
 	/*重启设备*/
 	RebootDevice();
 
 	/*检测心跳是否丢失*/
 	IsHeartBroken();
+	
+	/*发送心跳函数*/
+	SendHeartBeatToHost();
 }
 
 /**
   * @brief  配置逆初始化,系统调用.
   * @retval Null.
   */
-void McuDeInit(void * const pBaseInfo)
+void McuDeInit(void)
 {
 
 }
 
-
 /**
-  * @brief  车辆相关初始化,系统调用.
-  * @param	pBaseInfo 全局基本信息.
+  * @brief  初始化,系统调用.
   * @retval Null.
   */
-void McuInit(void * const pBaseInfo)
+void McuInit(void)
 {
-	
-
-	/*Init bus*/
-
-	/*Set Filter*/
 
 }
 
