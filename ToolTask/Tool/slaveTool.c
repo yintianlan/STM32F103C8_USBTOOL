@@ -3,8 +3,26 @@
 2.(从 )
 ******************************************************************************/
 #include "slaveTool.h"
-#include "stm32f1xx_hal.h"
 
+/* Chip parameters ------------------------------------------------------------*/
+#define 	FLASH_BASE_ADDR							(0x08000000)
+#define 	FLASH_USER_START_ADDR					(0x08002800)
+#define 	SYSTEM_BASE_ADDR						(FLASH_USER_START_ADDR + 0x100)
+#define 	SRAM_SIZE								(0x5000)		/*芯片SRAM大小，STM32F103C8 Sram = 20k*/
+#define		FLASH_SIZE								(0x10000)		/*芯片flash大小，STM32F103C8  64k*/
+#define 	SRAM_BASE_ADDR							(0x20000000)
+#define 	PARAMETER_START_ADDR					(SRAM_BASE_ADDR + SRAM_SIZE - 0x100)
+/* ---------------------------------------------------------------------------- */
+
+typedef struct
+{
+	unsigned int RebootState;
+	unsigned int BootCmd;
+	unsigned int Vol[4];
+}structSysData;
+
+/*系统保留的参数分区，不被编译器分配*/
+#define 	tpDataInfo	((structSysData *)(PARAMETER_START_ADDR))	//256 bytes to store system parameters
 
 static BOOL rebootFlag = FALSE;
 static uint32_t rebootTime;
@@ -12,6 +30,7 @@ static uint32_t rebootTime;
 static BOOL heartFlag = FALSE;
 static uint32_t PingSendTimer;
 
+extern IWDG_HandleTypeDef hiwdg;
 
 extern BaseType_t UartTransmitDataToHost(uint8_t * Buf, uint16_t Len);
 
@@ -47,6 +66,31 @@ void Delay1ms(volatile uint32_t nTime)
 	HAL_Delay(nTime);
 }
 
+/*****************************************************************************
+**Name:		 	MX_GPIO_Write
+**Function:
+**Args:
+**Return:
+******************************************************************************/
+void MX_GPIO_Write(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState)
+{
+    HAL_GPIO_WritePin(GPIOx, GPIO_Pin, PinState);
+}
+void MX_GPIO_Toggle(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
+{
+    HAL_GPIO_TogglePin(GPIOx, GPIO_Pin);
+}
+
+/*****************************************************************************
+**Name:		 	MX_IWDG_Refresh
+**Function:
+**Args:
+**Return:
+******************************************************************************/
+void MX_IWDG_Refresh(void)
+{
+  HAL_IWDG_Refresh(&hiwdg);
+}
 /*****************************************************************************
 **Name:		 	SendHeartBeatToHost
 **Function: 发送心跳函数

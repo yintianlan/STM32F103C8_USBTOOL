@@ -46,9 +46,19 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, REMOTE_CHOOSE_Pin|RELAY_H8_Pin|RELAY_H7_Pin|RELAY_H6_Pin 
+                          |RELAY_H5_Pin|RELAY_H4_Pin|RELAY_H3_Pin|KC_L4_Pin 
+                          |KC_L3_Pin|KC_L2_Pin|KC_L1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, RELAY_H2_Pin|RELAY_H1_Pin|KC_L8_Pin|KC_L7_Pin 
+                          |KC_L6_Pin|KC_L5_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = LED1_Pin;
@@ -57,17 +67,30 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : PAPin PAPin PAPin PAPin 
+                           PAPin PAPin PAPin PAPin 
+                           PAPin PAPin PAPin */
+  GPIO_InitStruct.Pin = REMOTE_CHOOSE_Pin|RELAY_H8_Pin|RELAY_H7_Pin|RELAY_H6_Pin 
+                          |RELAY_H5_Pin|RELAY_H4_Pin|RELAY_H3_Pin|KC_L4_Pin 
+                          |KC_L3_Pin|KC_L2_Pin|KC_L1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PBPin PBPin PBPin PBPin 
+                           PBPin PBPin */
+  GPIO_InitStruct.Pin = RELAY_H2_Pin|RELAY_H1_Pin|KC_L8_Pin|KC_L7_Pin 
+                          |KC_L6_Pin|KC_L5_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 2 */
-void MX_GPIO_Write(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState)
-{
-    HAL_GPIO_WritePin(GPIOx, GPIO_Pin, PinState);
-}
-void MX_GPIO_Toggle(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
-{
-    HAL_GPIO_TogglePin(GPIOx, GPIO_Pin);
-}
+
 /* USER CODE END 2 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

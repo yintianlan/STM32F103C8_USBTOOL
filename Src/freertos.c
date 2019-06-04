@@ -25,10 +25,8 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-#include "iwdg.h"
+/* USER CODE BEGIN Includes */     
 #include "usbd_cdc_if.h"
-#include "gpio.h"
 #include "slaveTool.h"
 
 /* USER CODE END Includes */

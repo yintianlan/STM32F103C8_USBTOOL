@@ -38,8 +38,6 @@
 void MX_GPIO_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-void MX_GPIO_Write(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState);
-void MX_GPIO_Toggle(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
 
 /* USER CODE END Prototypes */
 

@@ -60,6 +60,42 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define LED1_Pin GPIO_PIN_13
 #define LED1_GPIO_Port GPIOC
+#define REMOTE_CHOOSE_Pin GPIO_PIN_0
+#define REMOTE_CHOOSE_GPIO_Port GPIOA
+#define REMOTE_ADC_Pin GPIO_PIN_1
+#define REMOTE_ADC_GPIO_Port GPIOA
+#define RELAY_H8_Pin GPIO_PIN_2
+#define RELAY_H8_GPIO_Port GPIOA
+#define RELAY_H7_Pin GPIO_PIN_3
+#define RELAY_H7_GPIO_Port GPIOA
+#define RELAY_H6_Pin GPIO_PIN_4
+#define RELAY_H6_GPIO_Port GPIOA
+#define RELAY_H5_Pin GPIO_PIN_5
+#define RELAY_H5_GPIO_Port GPIOA
+#define RELAY_H4_Pin GPIO_PIN_6
+#define RELAY_H4_GPIO_Port GPIOA
+#define RELAY_H3_Pin GPIO_PIN_7
+#define RELAY_H3_GPIO_Port GPIOA
+#define RELAY_H2_Pin GPIO_PIN_0
+#define RELAY_H2_GPIO_Port GPIOB
+#define RELAY_H1_Pin GPIO_PIN_1
+#define RELAY_H1_GPIO_Port GPIOB
+#define KC_L8_Pin GPIO_PIN_12
+#define KC_L8_GPIO_Port GPIOB
+#define KC_L7_Pin GPIO_PIN_13
+#define KC_L7_GPIO_Port GPIOB
+#define KC_L6_Pin GPIO_PIN_14
+#define KC_L6_GPIO_Port GPIOB
+#define KC_L5_Pin GPIO_PIN_15
+#define KC_L5_GPIO_Port GPIOB
+#define KC_L4_Pin GPIO_PIN_8
+#define KC_L4_GPIO_Port GPIOA
+#define KC_L3_Pin GPIO_PIN_9
+#define KC_L3_GPIO_Port GPIOA
+#define KC_L2_Pin GPIO_PIN_10
+#define KC_L2_GPIO_Port GPIOA
+#define KC_L1_Pin GPIO_PIN_15
+#define KC_L1_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
