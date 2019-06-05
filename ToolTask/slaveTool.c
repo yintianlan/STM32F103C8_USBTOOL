@@ -6,6 +6,20 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef enum
+{
+  RELAYState_ON = 0,     // (公共端——常闭)
+  RELAYState_OFF,        // (公共端——常开)  
+}RELAYState_TypeDef;
+
+typedef struct
+{
+	uint8 RemoteChooseState;
+	uint8 LineState;
+	uint8 ColumnState;
+}structRelayState;
+
+structRelayState tRelayState;
 
 /* USER CODE END PTD */
 
@@ -24,6 +38,7 @@ extern IWDG_HandleTypeDef hiwdg;
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
 extern BaseType_t UartTransmitDataToHost(uint8_t * Buf, uint16_t Len);
+void GetRelayState(void);
 
 /* USER CODE END PFP */
 
@@ -151,19 +166,211 @@ void RebootDevice()
 	}
 }
 
+/**
+  * 函数功能: 设置继电器模块的状态
+  * 输入参数：无
+  * 返 回 值: 无
+  * 说    明：该函数使用类似标准库函数的编程方法，方便理解标准库函数编程思想。
+  */
+void RELAYx_StateSet(uint8 Line, uint8 state)
+{
+	GPIO_PinState pingSet;
+	if(state == 0x01)
+	{
+		pingSet = GPIO_PIN_SET;
+	}
+	else
+	{
+		pingSet = GPIO_PIN_RESET;
+	}
+
+	Line = Line + 1;
+	switch(Line)
+	{
+		case 0x01:
+			HAL_GPIO_WritePin(RELAY_H1_GPIO_Port, RELAY_H1_Pin, pingSet);
+			break;
+
+		case 0x02:
+			HAL_GPIO_WritePin(RELAY_H2_GPIO_Port, RELAY_H2_Pin, pingSet);
+			break;
+
+		case 0x03:
+			HAL_GPIO_WritePin(RELAY_H3_GPIO_Port, RELAY_H3_Pin, pingSet);
+			break;
+
+		case 0x04:
+			HAL_GPIO_WritePin(RELAY_H4_GPIO_Port, RELAY_H4_Pin, pingSet);
+			break;
+
+		case 0x05:
+			HAL_GPIO_WritePin(RELAY_H5_GPIO_Port, RELAY_H5_Pin, pingSet);
+			break;
+
+		case 0x06:
+			HAL_GPIO_WritePin(RELAY_H6_GPIO_Port, RELAY_H6_Pin, pingSet);
+			break;
+
+		case 0x07:
+			HAL_GPIO_WritePin(RELAY_H7_GPIO_Port, RELAY_H7_Pin, pingSet);
+			break;
+
+		case 0x08:
+			HAL_GPIO_WritePin(RELAY_H8_GPIO_Port, RELAY_H8_Pin, pingSet);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void RELAYy_StateSet( uint8 Column, uint8 state)
+{
+	GPIO_PinState pingSet;
+	if(state == 0x01)
+	{
+		pingSet = GPIO_PIN_SET;
+	}
+	else
+	{
+		pingSet = GPIO_PIN_RESET;
+	}
+
+	Column = Column + 1;
+	switch(Column)
+	{
+		case 0x01:
+			HAL_GPIO_WritePin(KC_L1_GPIO_Port, KC_L1_Pin, pingSet);
+			break;
+
+		case 0x02:
+			HAL_GPIO_WritePin(KC_L2_GPIO_Port, KC_L2_Pin, pingSet);
+			break;
+
+		case 0x03:
+			HAL_GPIO_WritePin(KC_L3_GPIO_Port, KC_L3_Pin, pingSet);
+			break;
+
+		case 0x04:
+			HAL_GPIO_WritePin(KC_L4_GPIO_Port, KC_L4_Pin, pingSet);
+			break;
+
+		case 0x05:
+			HAL_GPIO_WritePin(KC_L5_GPIO_Port, KC_L5_Pin, pingSet);
+			break;
+
+		case 0x06:
+			HAL_GPIO_WritePin(KC_L6_GPIO_Port, KC_L6_Pin, pingSet);
+			break;
+
+		case 0x07:
+			HAL_GPIO_WritePin(KC_L7_GPIO_Port, KC_L7_Pin, pingSet);
+			break;
+
+		case 0x08:
+			HAL_GPIO_WritePin(KC_L8_GPIO_Port, KC_L8_Pin, pingSet);
+			break;
+
+		default:
+			break;
+	}
+}
+
+/**
+  * 函数功能: 读取继电器的状态
+  * 输入参数：RELAY_number：继电器编号
+  * 返 回 值: RELAYState_OFF：继电器(公共端——常开)
+  *           RELAYState_ON： 继电器(公共端——常闭)
+  * 说    明：对应于低电平有效继电器模块
+  */
+uint8_t RELAY_GetState(void)
+{
+	uint8_t relay_state = RELAYState_ON;
+	static uint8_t line, column;
+
+	/*读行*/
+	HAL_GPIO_ReadPin(RELAY_H1_GPIO_Port, RELAY_H1_Pin) ? SET_BIT(line, 1<<0) : CLEAR_BIT(line, 1<<0);
+	HAL_GPIO_ReadPin(RELAY_H2_GPIO_Port, RELAY_H2_Pin) ? SET_BIT(line, 1<<1) : CLEAR_BIT(line, 1<<1);
+	HAL_GPIO_ReadPin(RELAY_H3_GPIO_Port, RELAY_H3_Pin) ? SET_BIT(line, 1<<2) : CLEAR_BIT(line, 1<<2);
+	HAL_GPIO_ReadPin(RELAY_H4_GPIO_Port, RELAY_H4_Pin) ? SET_BIT(line, 1<<3) : CLEAR_BIT(line, 1<<3);
+	HAL_GPIO_ReadPin(RELAY_H5_GPIO_Port, RELAY_H5_Pin) ? SET_BIT(line, 1<<4) : CLEAR_BIT(line, 1<<4);
+	HAL_GPIO_ReadPin(RELAY_H6_GPIO_Port, RELAY_H6_Pin) ? SET_BIT(line, 1<<5) : CLEAR_BIT(line, 1<<5);
+	HAL_GPIO_ReadPin(RELAY_H7_GPIO_Port, RELAY_H7_Pin) ? SET_BIT(line, 1<<6) : CLEAR_BIT(line, 1<<6);
+	HAL_GPIO_ReadPin(RELAY_H8_GPIO_Port, RELAY_H8_Pin) ? SET_BIT(line, 1<<7) : CLEAR_BIT(line, 1<<7);
+
+	/*读列*/
+	HAL_GPIO_ReadPin(KC_L1_GPIO_Port, KC_L1_Pin) ? SET_BIT(column, 1<<0) : CLEAR_BIT(column, 1<<0);
+	HAL_GPIO_ReadPin(KC_L2_GPIO_Port, KC_L2_Pin) ? SET_BIT(column, 1<<1) : CLEAR_BIT(column, 1<<1);
+	HAL_GPIO_ReadPin(KC_L3_GPIO_Port, KC_L3_Pin) ? SET_BIT(column, 1<<2) : CLEAR_BIT(column, 1<<2);
+	HAL_GPIO_ReadPin(KC_L4_GPIO_Port, KC_L4_Pin) ? SET_BIT(column, 1<<3) : CLEAR_BIT(column, 1<<3);
+	HAL_GPIO_ReadPin(KC_L5_GPIO_Port, KC_L5_Pin) ? SET_BIT(column, 1<<4) : CLEAR_BIT(column, 1<<4);
+	HAL_GPIO_ReadPin(KC_L6_GPIO_Port, KC_L6_Pin) ? SET_BIT(column, 1<<5) : CLEAR_BIT(column, 1<<5);
+	HAL_GPIO_ReadPin(KC_L7_GPIO_Port, KC_L7_Pin) ? SET_BIT(column, 1<<6) : CLEAR_BIT(column, 1<<6);
+	HAL_GPIO_ReadPin(KC_L8_GPIO_Port, KC_L8_Pin) ? SET_BIT(column, 1<<7) : CLEAR_BIT(column, 1<<7);
+
+	
+	if((line != 0) || (column != 0))
+	{
+		tRelayState.LineState = line;
+		tRelayState.ColumnState = column;
+		relay_state = RELAYState_ON;
+	}
+	else
+	{
+		tRelayState.LineState = 0;
+		tRelayState.ColumnState = 0;
+		relay_state = RELAYState_OFF;
+	}
+
+	return relay_state;
+}
+
+
 /*****************************************************************************
-**Name:		 	
-**Function:	 	
-**Args:
+**Name:		 	SetRelayPro
+**Function:	 	设置继电器导通
+**Args:	line:每一bit代表方控的行
+			column:每一bit代表方控的列
 **Return:
 ******************************************************************************/
-void SetRelayPro(uint8_t line, uint8_t column)
+void SetRelayPro(uint8_t sLine, uint8_t sColumn)
 {
+	uint8 result; 
+
+	if(sLine != 0x00)
+	{
+		for(int i = 0; i < 8; i++)
+		{
+			RELAYx_StateSet( i, sLine & (1<<i));
+		}
+	}
+
+	if(sColumn != 0x00)
+	{
+		for(int j = 0; j < 8; j++)
+		{
+			RELAYy_StateSet(j, sColumn & (1<<j));
+		}
+	}
+
+	RELAY_GetState();//读取继电器的状态
+
+	if((sLine == tRelayState.LineState) && (sColumn == tRelayState.ColumnState))
+	{
+		result = PASS;
+	}
+	else
+	{
+		result = FAIL;
+	}
+	
+	uint8_t ack[] = {0x0A, 0x01, result};
+	UartTransmitDataToHost(ack, sizeof(ack));
 }
 
 /*****************************************************************************
-**Name:		 	
-**Function:	 	
+**Name:		 	SetRemotePro
+**Function:	 	设置输出通道1-2
 **Args:
 **Return:
 ******************************************************************************/
@@ -172,13 +379,13 @@ void SetRemotePro(uint8_t channel)
 	uint8 result; 
 	if(channel == 0x01)
 	{
-		tpDataInfo->SetRemoteCh = REMOTE1;
+		tRelayState.RemoteChooseState = REMOTE1;
 		MX_GPIO_Write(REMOTE_CHOOSE_GPIO_Port, REMOTE_CHOOSE_Pin, GPIO_PIN_SET);
 		result = HAL_GPIO_ReadPin(REMOTE_CHOOSE_GPIO_Port, REMOTE_CHOOSE_Pin) == GPIO_PIN_SET ? PASS : FAIL;
 	}
 	else
 	{
-		tpDataInfo->SetRemoteCh = REMOTE2;
+		tRelayState.RemoteChooseState = REMOTE2;
 		MX_GPIO_Write(REMOTE_CHOOSE_GPIO_Port, REMOTE_CHOOSE_Pin, GPIO_PIN_RESET);
 		result = HAL_GPIO_ReadPin(REMOTE_CHOOSE_GPIO_Port, REMOTE_CHOOSE_Pin) == GPIO_PIN_RESET ? PASS : FAIL;
 	}
@@ -211,13 +418,17 @@ void SetVolCalibValue(uint32_t value)
 }
 
 /*****************************************************************************
-**Name:		 	
-**Function:	 	
+**Name:		 	GetRelayState
+**Function:	 	获取继电器行列导通状态
 **Args:
 **Return:
 ******************************************************************************/
 void GetRelayState(void)
 {
+	RELAY_GetState();
+
+	uint8_t ack[] = {0x0B, 0x02, tRelayState.LineState, tRelayState.ColumnState};
+	UartTransmitDataToHost(ack, sizeof(ack));
 }
 
 /*****************************************************************************
@@ -230,12 +441,11 @@ void GetRemoteCHState(void)
 {
 	uint8 ChannalNum;
 
-	ChannalNum = tpDataInfo->SetRemoteCh;
+	ChannalNum = tRelayState.RemoteChooseState;
 
 	uint8_t ack[] = {0x0B, 0x03, ChannalNum};
 	UartTransmitDataToHost(ack, sizeof(ack));
 }
-
 
 /*****************************************************************************
 **Name:		 	
@@ -245,6 +455,8 @@ void GetRemoteCHState(void)
 ******************************************************************************/
 void GetRemoteValue(void)
 {
+
+
 }
 
 
@@ -323,19 +535,21 @@ void HostCmdProcess(uint8_t *Buf, uint16_t Len)
 			//获取当前的导通状态
 			if(Cmd[1] == 0x02)
 			{
+				dbgprintf("Got relay io...\n");
 				GetRelayState();
 			}
 
 			//获取当前的通道配置状态
 			if(Cmd[1] == 0x03)
 			{
-				dbgprintf("Gott current adc channel...\n");
+				dbgprintf("Got adc channel...\n");
 				GetRemoteCHState();
 			}
 
 			//获取当前输出的电压值
 			if(Cmd[1] == 0x04)
 			{
+				dbgprintf("Got adc value...\n");
 				GetRemoteValue();
 			}
 		}
@@ -392,7 +606,6 @@ void McuInit(void)
 		tpDataInfo->SetVolValue = 3300;
 	}
 
-	tpDataInfo->SetRemoteCh = 0x00;
 	tpDataInfo->RemoteCh1[0] = REMOTE1;
 	tpDataInfo->RemoteCh2[0] = REMOTE2;
 

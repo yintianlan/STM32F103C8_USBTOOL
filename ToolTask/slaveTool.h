@@ -57,7 +57,6 @@ typedef struct
 #define 	tpDataInfo	((structSysData *)(PARAMETER_START_ADDR))	//256 bytes to store system parameters
 
 
-
 /* 函数接口 */
 void ResetUserTimer(uint32_t *Timer);
 uint32_t ReadUserTimer(uint32_t *Timer);

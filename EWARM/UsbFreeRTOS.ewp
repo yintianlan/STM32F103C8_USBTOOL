@@ -1410,8 +1410,6 @@
                     <state>$PROJ_DIR$/../Drivers/CMSIS/Device/ST/STM32F1xx/Include</state>
                     <state>$PROJ_DIR$/../Drivers/CMSIS/Include</state>
                     <state>$PROJ_DIR$\..\ToolTask</state>
-                    <state>$PROJ_DIR$\..\ToolTask\Comm\inc</state>
-                    <state>$PROJ_DIR$\..\ToolTask\Tool</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -2109,10 +2107,10 @@
         <group>
             <name>ToolTask</name>
             <file>
-                <name>$PROJ_DIR$\..\ToolTask\Tool\checkStatus.c</name>
+                <name>$PROJ_DIR$\..\ToolTask\checkStatus.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\ToolTask\Tool\slaveTool.c</name>
+                <name>$PROJ_DIR$\..\ToolTask\slaveTool.c</name>
             </file>
         </group>
         <group>

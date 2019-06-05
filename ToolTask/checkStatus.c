@@ -117,7 +117,7 @@ uint32_t GetChannelVol(uint8 chId)
 
 	/* 获取VDDA实际的电压电平 */
 	//vddaValue = GetVolIntCalibValue(tAdcValue.Value[REMOTE_REF]);
-	vddaValue = tpDataInfo->VolValue;
+	vddaValue = tpDataInfo->SetVolValue;
 
 	/* 方控通道0,1,2对应ad通道1,2,3 */
 	return GetAdcValue((AdcChannelTypedef)(chId + 1)) * vddaValue/ 4095;;
