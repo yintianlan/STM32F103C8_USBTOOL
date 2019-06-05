@@ -169,16 +169,45 @@ void SetRelayPro(uint8_t line, uint8_t column)
 ******************************************************************************/
 void SetRemotePro(uint8_t channel)
 {
+	uint8 result; 
+	if(channel == 0x01)
+	{
+		tpDataInfo->SetRemoteCh = REMOTE1;
+		MX_GPIO_Write(REMOTE_CHOOSE_GPIO_Port, REMOTE_CHOOSE_Pin, GPIO_PIN_SET);
+		result = HAL_GPIO_ReadPin(REMOTE_CHOOSE_GPIO_Port, REMOTE_CHOOSE_Pin) == GPIO_PIN_SET ? PASS : FAIL;
+	}
+	else
+	{
+		tpDataInfo->SetRemoteCh = REMOTE2;
+		MX_GPIO_Write(REMOTE_CHOOSE_GPIO_Port, REMOTE_CHOOSE_Pin, GPIO_PIN_RESET);
+		result = HAL_GPIO_ReadPin(REMOTE_CHOOSE_GPIO_Port, REMOTE_CHOOSE_Pin) == GPIO_PIN_RESET ? PASS : FAIL;
+	}
+
+	uint8_t ack[] = {0x0A, 0x0D, result};
+	UartTransmitDataToHost(ack, sizeof(ack));
 }
 
 /*****************************************************************************
-**Name:		 	
-**Function:	 	
+**Name:		 	SetVolCalibValue
+**Function:	 	发送主控板上AD通道管脚的默认电压值
 **Args:
 **Return:
 ******************************************************************************/
 void SetVolCalibValue(uint32_t value)
 {
+	uint8 result; 
+	if((value != 0) && (value <= 3300))
+	{
+		tpDataInfo->SetVolValue = value;
+		result = PASS;
+	}
+	else
+	{
+		result = FAIL;
+	}
+
+	uint8_t ack[] = {0x0A, 0xAD, result};
+	UartTransmitDataToHost(ack, sizeof(ack));
 }
 
 /*****************************************************************************
@@ -192,13 +221,19 @@ void GetRelayState(void)
 }
 
 /*****************************************************************************
-**Name:		 	
-**Function:	 	
+**Name:		 	GetRemoteCHState
+**Function:	 	请求当前AD配置通道
 **Args:
 **Return:
 ******************************************************************************/
 void GetRemoteCHState(void)
 {
+	uint8 ChannalNum;
+
+	ChannalNum = tpDataInfo->SetRemoteCh;
+
+	uint8_t ack[] = {0x0B, 0x03, ChannalNum};
+	UartTransmitDataToHost(ack, sizeof(ack));
 }
 
 
@@ -261,12 +296,14 @@ void HostCmdProcess(uint8_t *Buf, uint16_t Len)
 			//设置方控的导通
 			if(Cmd[1] == 0x01)
 			{
+				dbgprintf("Set relay io...\n");
 				SetRelayPro(Cmd[2], Cmd[3]);
 			}
 
 			//选择AD输出通道
 			if(Cmd[1] == 0x0D)
 			{
+				dbgprintf("Set adc channel...\n");
 				SetRemotePro(Cmd[2]);
 			}
 
@@ -275,6 +312,7 @@ void HostCmdProcess(uint8_t *Buf, uint16_t Len)
 			{
 				uint32_t value;
 				value = (Cmd[2] << 8) | Cmd[3];
+				dbgprintf("Set ping vdda...\n");
 				SetVolCalibValue(value);
 			}
 		}
@@ -291,6 +329,7 @@ void HostCmdProcess(uint8_t *Buf, uint16_t Len)
 			//获取当前的通道配置状态
 			if(Cmd[1] == 0x03)
 			{
+				dbgprintf("Gott current adc channel...\n");
 				GetRemoteCHState();
 			}
 
@@ -341,14 +380,28 @@ void McuBasicTaskProc(void)
 //void McuDeInit(void)
 //{
 //}
-//
-///**
-//  * @brief  初始化,系统调用.
-//  * @retval Null.
-//  */
-//void McuInit(void)
-//{
-//}
+
+/**
+  * @brief  初始化,系统调用.
+  * @retval Null.
+  */
+void McuInit(void)
+{
+	if(tpDataInfo->SetVolValue == 0x0000)
+	{
+		tpDataInfo->SetVolValue = 3300;
+	}
+
+	tpDataInfo->SetRemoteCh = 0x00;
+	tpDataInfo->RemoteCh1[0] = REMOTE1;
+	tpDataInfo->RemoteCh2[0] = REMOTE2;
+
+	//开始方控校准
+	AdcRemoteStartCalibrate();
+
+	//clear the reset flags
+	__HAL_RCC_CLEAR_RESET_FLAGS();
+}
 
 /* USER CODE END 0 */
 

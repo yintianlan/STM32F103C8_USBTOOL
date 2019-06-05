@@ -31,6 +31,9 @@
 #define 	T_1MM		(T_1S*60)
 /* 定义时间基准 */
 
+#define PASS (0)
+#define FAIL (1)
+
 /* Chip parameters ------------------------------------------------------------*/
 #define 	FLASH_BASE_ADDR							(0x08000000)
 #define 	FLASH_USER_START_ADDR					(0x08002800)
@@ -46,9 +49,10 @@ typedef struct
 {
 	unsigned int RebootState;
 	unsigned int BootCmd;
-	unsigned int VolValue;
-	unsigned char RemoteKCh1[3];
-	unsigned char RemoteKCh2[3];
+	unsigned int SetVolValue;
+	unsigned char SetRemoteCh;
+	unsigned char RemoteCh1[3];
+	unsigned char RemoteCh2[3];
 }structSysData;
 #define 	tpDataInfo	((structSysData *)(PARAMETER_START_ADDR))	//256 bytes to store system parameters
 

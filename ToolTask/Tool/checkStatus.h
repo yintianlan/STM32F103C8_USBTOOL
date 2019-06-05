@@ -8,6 +8,8 @@
 #endif
 
 #define ADC_CONVERTED_DATA_BUFFER_SIZE		(3)
+#define REMOTE1 (1)
+#define REMOTE2 (2)
 
 
 typedef enum

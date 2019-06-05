@@ -169,6 +169,8 @@ void StartMcuBasicTask(void const * argument)
   
   fwdgId = TaskFeedIwdgRegister();
 
+  McuInit();
+
   /* Infinite loop */
   for(;;)
   {
