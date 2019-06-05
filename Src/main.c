@@ -29,6 +29,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "slaveTool.h"
+#include "checkStatus.h"
 
 /* USER CODE END Includes */
 
@@ -48,8 +50,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-
 /* USER CODE BEGIN PV */
+extern AdcValueTypedef		tAdcValue;
 
 /* USER CODE END PV */
 
@@ -99,6 +101,7 @@ int main(void)
   MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
 
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t *)tAdcValue.Value, ADC_CONVERTED_DATA_BUFFER_SIZE);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */

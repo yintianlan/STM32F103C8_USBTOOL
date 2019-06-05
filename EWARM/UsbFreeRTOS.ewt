@@ -2380,6 +2380,9 @@
         <group>
             <name>ToolTask</name>
             <file>
+                <name>$PROJ_DIR$\..\ToolTask\Tool\checkStatus.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\ToolTask\Tool\slaveTool.c</name>
             </file>
         </group>

@@ -1,29 +1,16 @@
-/*****************************************************************************
-1.(主 Task)
-2.(从 )
-******************************************************************************/
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
 #include "slaveTool.h"
 
-/* Chip parameters ------------------------------------------------------------*/
-#define 	FLASH_BASE_ADDR							(0x08000000)
-#define 	FLASH_USER_START_ADDR					(0x08002800)
-#define 	SYSTEM_BASE_ADDR						(FLASH_USER_START_ADDR + 0x100)
-#define 	SRAM_SIZE								(0x5000)		/*芯片SRAM大小，STM32F103C8 Sram = 20k*/
-#define		FLASH_SIZE								(0x10000)		/*芯片flash大小，STM32F103C8  64k*/
-#define 	SRAM_BASE_ADDR							(0x20000000)
-#define 	PARAMETER_START_ADDR					(SRAM_BASE_ADDR + SRAM_SIZE - 0x100)
-/* ---------------------------------------------------------------------------- */
+/* USER CODE END Includes */
 
-typedef struct
-{
-	unsigned int RebootState;
-	unsigned int BootCmd;
-	unsigned int Vol[4];
-}structSysData;
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
 
-/*系统保留的参数分区，不被编译器分配*/
-#define 	tpDataInfo	((structSysData *)(PARAMETER_START_ADDR))	//256 bytes to store system parameters
+/* USER CODE END PTD */
 
+/* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN PV */
 static BOOL rebootFlag = FALSE;
 static uint32_t rebootTime;
 
@@ -32,8 +19,16 @@ static uint32_t PingSendTimer;
 
 extern IWDG_HandleTypeDef hiwdg;
 
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+/* USER CODE BEGIN PFP */
 extern BaseType_t UartTransmitDataToHost(uint8_t * Buf, uint16_t Len);
 
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
 /*****************************************************************************
 **Name:		 	ReadUserTimer
 **Function:
@@ -74,22 +69,22 @@ void Delay1ms(volatile uint32_t nTime)
 ******************************************************************************/
 void MX_GPIO_Write(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState)
 {
-    HAL_GPIO_WritePin(GPIOx, GPIO_Pin, PinState);
+	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, PinState);
 }
 void MX_GPIO_Toggle(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)
 {
-    HAL_GPIO_TogglePin(GPIOx, GPIO_Pin);
+	HAL_GPIO_TogglePin(GPIOx, GPIO_Pin);
 }
 
 /*****************************************************************************
 **Name:		 	MX_IWDG_Refresh
-**Function:
+**Function:	喂狗
 **Args:
 **Return:
 ******************************************************************************/
 void MX_IWDG_Refresh(void)
 {
-  HAL_IWDG_Refresh(&hiwdg);
+	HAL_IWDG_Refresh(&hiwdg);
 }
 /*****************************************************************************
 **Name:		 	SendHeartBeatToHost
@@ -101,35 +96,13 @@ void SendHeartBeatToHost(void)
 {
 	/*心跳*/
 	uint8 sendBuf[] = {0x01, 0x01, 0xFF};
-	static uint32_t timer;
+	static uint32_t sendTimer;
 
-	if(ReadUserTimer(&timer) >= T_100MS * 10)
+	if(ReadUserTimer(&sendTimer) >= T_100MS * 10)
 	{
 		UartTransmitDataToHost(sendBuf, sizeof(sendBuf));
 
-		ResetUserTimer(&timer);
-	}
-}
-
-/*****************************************************************************
-**Name:		 	HeartBeatCheck
-**Function:	心跳应答函数
-**Args:
-**Return:
-******************************************************************************/
-void HeartBeatCheck(unsigned char * const pCAN_RxData)
-{
-	if ((pCAN_RxData[1] == 0x01) && (pCAN_RxData[2] == 0x01) )
-	{
-		/* code */
-		heartFlag = TRUE;
-//		uint8 sendBuf[] = {0xAC, 0x10, 0x01, 0x01};
-//		UartTransmitDataToHost(sendBuf, sizeof(sendBuf));
-		ResetUserTimer(&PingSendTimer);
-	}
-	else
-	{
-		/* code */
+		ResetUserTimer(&sendTimer);
 	}
 }
 
@@ -178,6 +151,68 @@ void RebootDevice()
 	}
 }
 
+/*****************************************************************************
+**Name:		 	
+**Function:	 	
+**Args:
+**Return:
+******************************************************************************/
+void SetRelayPro(uint8_t line, uint8_t column)
+{
+}
+
+/*****************************************************************************
+**Name:		 	
+**Function:	 	
+**Args:
+**Return:
+******************************************************************************/
+void SetRemotePro(uint8_t channel)
+{
+}
+
+/*****************************************************************************
+**Name:		 	
+**Function:	 	
+**Args:
+**Return:
+******************************************************************************/
+void SetVolCalibValue(uint32_t value)
+{
+}
+
+/*****************************************************************************
+**Name:		 	
+**Function:	 	
+**Args:
+**Return:
+******************************************************************************/
+void GetRelayState(void)
+{
+}
+
+/*****************************************************************************
+**Name:		 	
+**Function:	 	
+**Args:
+**Return:
+******************************************************************************/
+void GetRemoteCHState(void)
+{
+}
+
+
+/*****************************************************************************
+**Name:		 	
+**Function:	 	
+**Args:
+**Return:
+******************************************************************************/
+void GetRemoteValue(void)
+{
+}
+
+
 /**
   * @brief  解析host协议.
   * @param	Buf 一帧数据中数据部分的首地址.
@@ -186,87 +221,101 @@ void RebootDevice()
   */
 void HostCmdProcess(uint8_t *Buf, uint16_t Len)
 {
-    uint8_t *Cmd;
-    Cmd = Buf;
-    
-    dbgprintf("Process CMD %#02X\n", Cmd[0]);
-    
-    switch(Cmd[0])
-    {
-        case 0x00:
-        break;
-        
-        case 0x01:
-        {
-            if(Cmd[1] == 0xFF)
-            {
-                /*System reset*/
-                uint8_t ack[] = {0x01, 0xFF, 0x00};
-				
-                dbgprintf("System reset...\n");
-                UartTransmitDataToHost(ack, sizeof(ack));
-
-				rebootFlag = TRUE;
-				rebootTime = Cmd[2] <<8 | Cmd[3];
-            }
-			
+	uint8_t *Cmd;
+	Cmd = Buf;
+	
+	dbgprintf("Process CMD %#02X\n", Cmd[0]);
+	
+	switch(Cmd[0])
+	{
+		case 0x00:
+		{
 			if((Cmd[1] == 0x01) && (Cmd[2] == 0x01))
-            {
-                /*Got ping*/
-                uint8_t ack[] = {0x01, 0x01, 0x00};
-                dbgprintf("Got ping...\n");
-                UartTransmitDataToHost(ack, sizeof(ack));
-            }
-        }
-        break;
-        
-        case 0x0A:
-        {
-		  	//
-		  	if(Cmd[1] == 0x01)
 			{
-			}
-			
-		  	//
-		  	if(Cmd[1] == 0x0D)
-			{
-			}
-			
-		  	//
-		  	if(Cmd[1] == 0xAD)
-			{
-			}			
-        }
-        break;
-        
-        case 0x0B:
-        {
-		  	//
-		  	if(Cmd[1] == 0x02)
-			{
-			}
-			
-		  	//
-		  	if(Cmd[1] == 0x03)
-			{
-			}
-			
-		  	//
-		  	if(Cmd[1] == 0x04)
-			{
+				/*Got ping*/
+				uint8_t ack[] = {0x01, 0x01, 0x00};
+				dbgprintf("Got ping...\n");
+				UartTransmitDataToHost(ack, sizeof(ack));
 			}
 		}
-        break;
-		
-        case 0xAC:
-        {
+		break;
 
-        }
-        break;
-		
+		case 0x01:
+		{
+			if(Cmd[1] == 0xFF)
+			{
+				/*System reset*/
+				uint8_t ack[] = {0x01, 0xFF, 0x00};
+
+				dbgprintf("System reset...\n");
+				UartTransmitDataToHost(ack, sizeof(ack));
+
+				rebootFlag = TRUE;
+				rebootTime = (Cmd[2] << 8) | Cmd[3];
+			}
+		}
+		break;
+
+		case 0x0A:
+		{
+			//设置方控的导通
+			if(Cmd[1] == 0x01)
+			{
+				SetRelayPro(Cmd[2], Cmd[3]);
+			}
+
+			//选择AD输出通道
+			if(Cmd[1] == 0x0D)
+			{
+				SetRemotePro(Cmd[2]);
+			}
+
+			//设置AD的校准值
+			if(Cmd[1] == 0xAD)
+			{
+				uint32_t value;
+				value = (Cmd[2] << 8) | Cmd[3];
+				SetVolCalibValue(value);
+			}
+		}
+		break;
+
+		case 0x0B:
+		{
+			//获取当前的导通状态
+			if(Cmd[1] == 0x02)
+			{
+				GetRelayState();
+			}
+
+			//获取当前的通道配置状态
+			if(Cmd[1] == 0x03)
+			{
+				GetRemoteCHState();
+			}
+
+			//获取当前输出的电压值
+			if(Cmd[1] == 0x04)
+			{
+				GetRemoteValue();
+			}
+		}
+		break;
+
+		case 0xAC:
+		{
+			//上位机心跳应答
+			if((Cmd[1] == 0x01) && (Cmd[2] == 0x01) && (Cmd[3] == 0xFF))
+			{
+				heartFlag = TRUE;
+				ResetUserTimer(&PingSendTimer);
+			}
+		}
+		break;
+
 		default:
-			break;
-    }
+		break;
+	}
 }
 	
 /**
@@ -285,21 +334,21 @@ void McuBasicTaskProc(void)
 	SendHeartBeatToHost();
 }
 
-/**
-  * @brief  配置逆初始化,系统调用.
-  * @retval Null.
-  */
-void McuDeInit(void)
-{
+///**
+//  * @brief  配置逆初始化,系统调用.
+//  * @retval Null.
+//  */
+//void McuDeInit(void)
+//{
+//}
+//
+///**
+//  * @brief  初始化,系统调用.
+//  * @retval Null.
+//  */
+//void McuInit(void)
+//{
+//}
 
-}
-
-/**
-  * @brief  初始化,系统调用.
-  * @retval Null.
-  */
-void McuInit(void)
-{
-
-}
+/* USER CODE END 0 */
 
