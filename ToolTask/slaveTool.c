@@ -167,10 +167,10 @@ void RebootDevice()
 }
 
 /**
-  * 函数功能: 设置继电器模块的状态
+  * 函数功能: 设置继电器模块的行状态
   * 输入参数：无
   * 返 回 值: 无
-  * 说    明：该函数使用类似标准库函数的编程方法，方便理解标准库函数编程思想。
+  * 说    明： 无
   */
 void RELAYx_StateSet(uint8 Line, uint8 state)
 {
@@ -224,6 +224,12 @@ void RELAYx_StateSet(uint8 Line, uint8 state)
 	}
 }
 
+/**
+  * 函数功能: 设置继电器模块的列状态
+  * 输入参数：无
+  * 返 回 值: 无
+  * 说    明： 无
+  */
 void RELAYy_StateSet( uint8 Column, uint8 state)
 {
 	GPIO_PinState pingSet;
@@ -278,7 +284,7 @@ void RELAYy_StateSet( uint8 Column, uint8 state)
 
 /**
   * 函数功能: 读取继电器的状态
-  * 输入参数：RELAY_number：继电器编号
+  * 输入参数：无
   * 返 回 值: RELAYState_OFF：继电器(公共端——常开)
   *           RELAYState_ON： 继电器(公共端——常闭)
   * 说    明：对应于低电平有效继电器模块
@@ -337,20 +343,14 @@ void SetRelayPro(uint8_t sLine, uint8_t sColumn)
 {
 	uint8 result; 
 
-	if(sLine != 0x00)
+	for(int i = 0; i < 8; i++)
 	{
-		for(int i = 0; i < 8; i++)
-		{
-			RELAYx_StateSet( i, sLine & (1<<i));
-		}
+		RELAYx_StateSet( i, sLine & (1<<i));
 	}
 
-	if(sColumn != 0x00)
+	for(int j = 0; j < 8; j++)
 	{
-		for(int j = 0; j < 8; j++)
-		{
-			RELAYy_StateSet(j, sColumn & (1<<j));
-		}
+		RELAYy_StateSet(j, sColumn & (1<<j));
 	}
 
 	RELAY_GetState();//读取继电器的状态

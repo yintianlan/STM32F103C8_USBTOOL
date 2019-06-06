@@ -120,7 +120,7 @@ uint32_t GetChannelVol(uint8 chId)
 	vddaValue = tpDataInfo->SetVolValue;
 
 	/* 方控通道0,1,2对应ad通道1,2,3 */
-	return GetAdcValue((AdcChannelTypedef)(chId + 1)) * vddaValue/ 4095;;
+	return GetAdcValue((AdcChannelTypedef)chId) * vddaValue/ 4095;;
 }
 /*****************************************************************************
 **Name:		 	GetRemoteChannelStableVol
