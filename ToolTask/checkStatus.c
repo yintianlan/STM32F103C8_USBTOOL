@@ -46,8 +46,8 @@ typedef enum
 }AdSyncStepDef;
 
 
-/*3路按键通道*/
-RemoteKeyChannelTypedef tRemoteKeyCh1 = 
+/*1路按键通道*/
+RemoteKeyChannelTypedef tRemoteKeyCh = 
 {
 	.chId = 0,
 	.chState = 0,
@@ -57,17 +57,28 @@ RemoteKeyChannelTypedef tRemoteKeyCh1 =
 	.valueNow = V100mVolt * 33,
 	.defaultVoltage = V100mVolt * 33,
 };
-RemoteKeyChannelTypedef tRemoteKeyCh2 = 
-{
-	.chId = 1,
-	.chState = 0,
-	.delayTimer = REMOTE_SIGNAL_PERIOD_TIME,
-	.thresholdTime = REMOTE_KEY_DELAY_TIME_RELEASE,
-	.thresholdVal = REMOTE_KEY_THRESHOLD_VAL,	
-	.valueNow = V100mVolt * 33,
-	.defaultVoltage = V100mVolt * 33,
-};
 
+//RemoteKeyChannelTypedef tRemoteKeyCh1 = 
+//{
+//	.chId = 0,
+//	.chState = 0,
+//	.delayTimer = REMOTE_SIGNAL_PERIOD_TIME,
+//	.thresholdTime = REMOTE_KEY_DELAY_TIME_RELEASE,
+//	.thresholdVal = REMOTE_KEY_THRESHOLD_VAL,
+//	.valueNow = V100mVolt * 33,
+//	.defaultVoltage = V100mVolt * 33,
+//};
+//RemoteKeyChannelTypedef tRemoteKeyCh2 = 
+//{
+//	.chId = 1,
+//	.chState = 0,
+//	.delayTimer = REMOTE_SIGNAL_PERIOD_TIME,
+//	.thresholdTime = REMOTE_KEY_DELAY_TIME_RELEASE,
+//	.thresholdVal = REMOTE_KEY_THRESHOLD_VAL,	
+//	.valueNow = V100mVolt * 33,
+//	.defaultVoltage = V100mVolt * 33,
+//};
+//
 
 static AdSyncStepDef adRemoteSyncStep = AD_SYNC_INITIALIZE;
 
@@ -131,7 +142,6 @@ uint32_t GetChannelVol(uint8 chId)
 ******************************************************************************/
 void GetRemoteChannelStableVol(RemoteKeyChannelTypedef *remoteChx)
 {
-//	uint8 condition = 1;
 	uint8 signalIndex = 0;
 	uint32_t checkTimer;
 
@@ -349,13 +359,15 @@ void CheckRemoteKey(void)
 		case AD_SYNC_CALIBRATION:
 			if(ReadUserTimer(&PowerOnTimer) < T_100MS * 1)
 			{
-				GetRemoteChannelDefaultVol(&tRemoteKeyCh1);
-				GetRemoteChannelDefaultVol(&tRemoteKeyCh2);
+				GetRemoteChannelDefaultVol(&tRemoteKeyCh);
+//				GetRemoteChannelDefaultVol(&tRemoteKeyCh1);
+//				GetRemoteChannelDefaultVol(&tRemoteKeyCh2);
 			}
 			else
 			{
-				SEND_REMOTE_KEY_TO_HOST(tRemoteKeyCh1.chId, REMOTE_KEY_NO_KEY);
-				SEND_REMOTE_KEY_TO_HOST(tRemoteKeyCh2.chId, REMOTE_KEY_NO_KEY);
+				SEND_REMOTE_KEY_TO_HOST(tRemoteKeyCh.chId, REMOTE_KEY_NO_KEY);
+//				SEND_REMOTE_KEY_TO_HOST(tRemoteKeyCh1.chId, REMOTE_KEY_NO_KEY);
+//				SEND_REMOTE_KEY_TO_HOST(tRemoteKeyCh2.chId, REMOTE_KEY_NO_KEY);
 
 				adRemoteSyncStep = AD_SYNC_WORKING;
 				ResetUserTimer(&PowerOnTimer);
@@ -365,8 +377,9 @@ void CheckRemoteKey(void)
 		/*按键处理*/
 		case AD_SYNC_WORKING:
 			{
-				GetRemoteChannelVol(&tRemoteKeyCh1);
-				GetRemoteChannelVol(&tRemoteKeyCh2);
+					GetRemoteChannelVol(&tRemoteKeyCh);
+//				GetRemoteChannelVol(&tRemoteKeyCh1);
+//				GetRemoteChannelVol(&tRemoteKeyCh2);
 			}
 			break;
 

@@ -11,7 +11,7 @@
 #define REMOTE1 (1)
 #define REMOTE2 (2)
 
-
+/*ADC通道*/
 typedef enum
 {
 	REMOTE_01 = 0,
@@ -19,7 +19,7 @@ typedef enum
 	MAX_CH = REMOTE_REF,
 }AdcChannelTypedef;
 
-
+/*存放ADC数据数组*/
 typedef struct
 {
 	uint32_t Value[ADC_CONVERTED_DATA_BUFFER_SIZE];
@@ -28,6 +28,7 @@ typedef struct
 
 
 checkStatus_GLOBAL_ void CheckStatus(void);
+checkStatus_GLOBAL_ void CheckRemoteKey(void);
 checkStatus_GLOBAL_ void AdcRemoteStartCalibrate(void);
 
 #endif

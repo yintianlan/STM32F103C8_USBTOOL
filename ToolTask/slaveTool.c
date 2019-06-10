@@ -585,6 +585,10 @@ void McuBasicTaskProc(void)
 	
 	/*发送心跳函数*/
 	SendHeartBeatToHost();
+
+	/*检测adc*/
+	CheckStatus();
+
 }
 
 ///**
