@@ -7,7 +7,7 @@
     #define		checkStatus_GLOBAL_
 #endif
 
-#define ADC_CONVERTED_DATA_BUFFER_SIZE		(3)
+#define ADC_CONVERTED_DATA_BUFFER_SIZE		(2)
 #define REMOTE1 (1)
 #define REMOTE2 (2)
 
@@ -28,7 +28,6 @@ typedef struct
 
 
 checkStatus_GLOBAL_ void CheckStatus(void);
-checkStatus_GLOBAL_ void CheckRemoteKey(void);
 checkStatus_GLOBAL_ void AdcRemoteStartCalibrate(void);
 
 #endif

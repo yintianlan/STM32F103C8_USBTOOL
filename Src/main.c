@@ -50,6 +50,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+
 /* USER CODE BEGIN PV */
 extern AdcValueTypedef		tAdcValue;
 

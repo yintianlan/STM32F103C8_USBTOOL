@@ -49,12 +49,14 @@ typedef struct
 {
 	unsigned int RebootState;
 	unsigned int BootCmd;
-	unsigned int SetVolValue;
+	unsigned short SetVolValue;
 	unsigned char SetRemoteCh;
 	unsigned char RemoteCh1[3];
 	unsigned char RemoteCh2[3];
 }structSysData;
-#define 	tpDataInfo	((structSysData *)(PARAMETER_START_ADDR))	//256 bytes to store system parameters
+
+extern structSysData *const tpDataInfo;
+
 
 
 /* 函数接口 */

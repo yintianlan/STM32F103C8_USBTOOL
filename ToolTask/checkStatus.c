@@ -17,6 +17,10 @@ extern BaseType_t UartTransmitDataToHost(uint8_t * Buf, uint16_t Len);
 #define SEND_REMOTE_KEY_TO_HOST(Ch, Val)		do{uint8 buf[5] = {0x00, 0xAD, (u8)Ch, (u8)(Val >> 8), (u8)Val};\
 													UartTransmitDataToHost(buf,sizeof(buf));}while(0)
 
+/* Send battery voltage */
+#define SEND_BAT_VOLTAGE_TO_HOST 	do{uint8 buf[4] = {0x00,0x02,(BatteryVoltage >> 8)&0xff, BatteryVoltage&0xff};\
+													UartTransmitDataToHost(buf,4);}while(0)
+
 
 #define REMOTE_KEY_DELAY_TIME_PRESS			(T_1MS * 10)
 #define REMOTE_KEY_DELAY_TIME_RELEASE		(T_1MS * 10)
@@ -82,6 +86,7 @@ RemoteKeyChannelTypedef tRemoteKeyCh =
 
 static AdSyncStepDef adRemoteSyncStep = AD_SYNC_INITIALIZE;
 
+uint16_t		BatteryVoltage;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -127,12 +132,36 @@ uint32_t GetChannelVol(uint8 chId)
 	uint32_t vddaValue;
 
 	/* 获取VDDA实际的电压电平 */
-	//vddaValue = GetVolIntCalibValue(tAdcValue.Value[REMOTE_REF]);
 	vddaValue = tpDataInfo->SetVolValue;
 
-	/* 方控通道0,1,2对应ad通道1,2,3 */
+	if( vddaValue <= 0 && vddaValue >=3600)
+	{
+		vddaValue = 3300;
+	}
+
+	/* 方控通道AD值 */
 	return GetAdcValue((AdcChannelTypedef)chId) * vddaValue/ 4095;;
 }
+
+/*****************************************************************************
+**Name:		 	CheckBatteryVol
+**Function:	实时检测电池电压
+**Args:
+**Return:
+******************************************************************************/
+void CheckBatteryVol(void)
+{
+	static uint32_t AutoSendTimer;
+
+	BatteryVoltage = GetChannelVol(tRemoteKeyCh.chId);
+
+	if(ReadUserTimer(&AutoSendTimer) > T_1S * 1)
+	{
+		SEND_BAT_VOLTAGE_TO_HOST; 
+		ResetUserTimer(&AutoSendTimer);
+	}
+}
+
 /*****************************************************************************
 **Name:		 	GetRemoteChannelStableVol
 **Function:	 	获取当前通道的稳定值
@@ -360,14 +389,10 @@ void CheckRemoteKey(void)
 			if(ReadUserTimer(&PowerOnTimer) < T_100MS * 1)
 			{
 				GetRemoteChannelDefaultVol(&tRemoteKeyCh);
-//				GetRemoteChannelDefaultVol(&tRemoteKeyCh1);
-//				GetRemoteChannelDefaultVol(&tRemoteKeyCh2);
 			}
 			else
 			{
 				SEND_REMOTE_KEY_TO_HOST(tRemoteKeyCh.chId, REMOTE_KEY_NO_KEY);
-//				SEND_REMOTE_KEY_TO_HOST(tRemoteKeyCh1.chId, REMOTE_KEY_NO_KEY);
-//				SEND_REMOTE_KEY_TO_HOST(tRemoteKeyCh2.chId, REMOTE_KEY_NO_KEY);
 
 				adRemoteSyncStep = AD_SYNC_WORKING;
 				ResetUserTimer(&PowerOnTimer);
@@ -378,8 +403,6 @@ void CheckRemoteKey(void)
 		case AD_SYNC_WORKING:
 			{
 					GetRemoteChannelVol(&tRemoteKeyCh);
-//				GetRemoteChannelVol(&tRemoteKeyCh1);
-//				GetRemoteChannelVol(&tRemoteKeyCh2);
 			}
 			break;
 
@@ -399,6 +422,10 @@ void CheckRemoteKey(void)
 ******************************************************************************/
 void CheckStatus(void)
 {
+	//以按键方式检测
 	CheckRemoteKey();
+
+	//实时检测ADC
+	CheckBatteryVol();
 }
 

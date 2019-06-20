@@ -6,6 +6,9 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+structSysData *const 	tpDataInfo = ((structSysData *)(PARAMETER_START_ADDR));	//256 bytes to store system parameters
+
+
 typedef enum
 {
   RELAYState_ON = 0,     // (公共端——常闭)
@@ -679,10 +682,7 @@ void McuDeInit(void)
   */
 void McuInit(void)
 {
-	if(tpDataInfo->SetVolValue == 0x0000)
-	{
-		tpDataInfo->SetVolValue = 3300;
-	}
+	tpDataInfo->SetVolValue = 3300;
 
 	tpDataInfo->RemoteCh1[0] = REMOTE1;
 	tpDataInfo->RemoteCh2[0] = REMOTE2;
