@@ -101,6 +101,76 @@ void MX_IWDG_Refresh(void)
 {
 	HAL_IWDG_Refresh(&hiwdg);
 }
+
+#if 0
+/** Configure pins as 
+        * Output
+*/
+void Write_GPIO_Init(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	/* GPIO Ports Clock Enable */
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+
+	/*Configure GPIO pins : PAPin PAPin PAPin PAPin 
+													 PAPin PAPin PAPin PAPin 
+													 PAPin PAPin PAPin */
+	GPIO_InitStruct.Pin = REMOTE_CHOOSE_Pin|RELAY_H8_Pin|RELAY_H7_Pin|RELAY_H6_Pin 
+													|RELAY_H5_Pin|RELAY_H4_Pin|RELAY_H3_Pin|KC_L4_Pin 
+													|KC_L3_Pin|KC_L2_Pin|KC_L1_Pin;
+	//GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Mode = GPIO_CRL_CNF0_0; //浮空模式
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	/*Configure GPIO pins : PBPin PBPin PBPin PBPin 
+													 PBPin PBPin */
+	GPIO_InitStruct.Pin = RELAY_H2_Pin|RELAY_H1_Pin|KC_L8_Pin|KC_L7_Pin 
+													|KC_L6_Pin|KC_L5_Pin;
+	//GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Mode = GPIO_CRL_CNF0_0; //浮空模式
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+}
+
+/** Configure pins as 
+        * Input 
+*/
+void Read_GPIO_Init(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	/* GPIO Ports Clock Enable */
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+
+	/*Configure GPIO pins : PAPin PAPin PAPin PAPin 
+													 PAPin PAPin PAPin PAPin 
+													 PAPin PAPin PAPin */
+	GPIO_InitStruct.Pin = REMOTE_CHOOSE_Pin|RELAY_H8_Pin|RELAY_H7_Pin|RELAY_H6_Pin 
+													|RELAY_H5_Pin|RELAY_H4_Pin|RELAY_H3_Pin|KC_L4_Pin 
+													|KC_L3_Pin|KC_L2_Pin|KC_L1_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	/*Configure GPIO pins : PBPin PBPin PBPin PBPin 
+													 PBPin PBPin */
+	GPIO_InitStruct.Pin = RELAY_H2_Pin|RELAY_H1_Pin|KC_L8_Pin|KC_L7_Pin 
+													|KC_L6_Pin|KC_L5_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+}
+#endif
+
 /*****************************************************************************
 **Name:		 	SendHeartBeatToHost
 **Function: 发送心跳函数
@@ -184,7 +254,6 @@ void RELAYx_StateSet(uint8 Line, uint8 state)
 		pingSet = GPIO_PIN_RESET;
 	}
 
-	Line = Line + 1;
 	switch(Line)
 	{
 		case 0x01:
@@ -242,7 +311,6 @@ void RELAYy_StateSet( uint8 Column, uint8 state)
 		pingSet = GPIO_PIN_RESET;
 	}
 
-	Column = Column + 1;
 	switch(Column)
 	{
 		case 0x01:
@@ -341,19 +409,25 @@ uint8_t RELAY_GetState(void)
 ******************************************************************************/
 void SetRelayPro(uint8_t sLine, uint8_t sColumn)
 {
-	uint8 result; 
+	uint8 result;
+	uint8 pingSet;
 
+	//控制行输出
 	for(int i = 0; i < 8; i++)
 	{
-		RELAYx_StateSet( i, sLine & (1<<i));
+		pingSet = sLine & (1<<i) ? 1 : 0;
+		RELAYx_StateSet( i + 1, pingSet);
 	}
 
+	//控制列输出
 	for(int j = 0; j < 8; j++)
 	{
-		RELAYy_StateSet(j, sColumn & (1<<j));
+		pingSet = sColumn & (1<<j) ? 1 : 0;
+		RELAYy_StateSet(j + 1, pingSet);
 	}
 
-	RELAY_GetState();//读取继电器的状态
+	//读取继电器行、列的状态
+	RELAY_GetState();
 
 	if((sLine == tRelayState.LineState) && (sColumn == tRelayState.ColumnState))
 	{
@@ -591,13 +665,13 @@ void McuBasicTaskProc(void)
 
 }
 
-///**
-//  * @brief  配置逆初始化,系统调用.
-//  * @retval Null.
-//  */
-//void McuDeInit(void)
-//{
-//}
+/**
+  * @brief  配置逆初始化,系统调用.
+  * @retval Null.
+  */
+void McuDeInit(void)
+{
+}
 
 /**
   * @brief  初始化,系统调用.

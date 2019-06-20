@@ -138,7 +138,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of McuBasicTask */
-  osThreadDef(McuBasicTask, StartMcuBasicTask, osPriorityNormal, 0, 128);
+  osThreadDef(McuBasicTask, StartMcuBasicTask, osPriorityNormal, 0, 256);
   McuBasicTaskHandle = osThreadCreate(osThread(McuBasicTask), NULL);
 
   /* definition and creation of HostDecodeTask */
