@@ -1,10 +1,16 @@
-#define	_checkStatus_GLOBAL_
+#define	_checkAdc_GLOBAL_
 #include "slaveTool.h"
 
 /* Private variables ---------------------------------------------------------*/
-AdcValueTypedef  tAdcValue;
-static uint32_t PowerOnTimer;
 extern BaseType_t UartTransmitDataToHost(uint8_t * Buf, uint16_t Len);
+
+/* Send Remote key to host */
+#define SEND_REMOTE_KEY_TO_HOST(Ch, Val)		do{uint8 buf[5] = {0x00, 0xAD, (u8)Ch, (u8)(Val >> 8), (u8)Val};\
+													UartTransmitDataToHost(buf,sizeof(buf));}while(0)
+
+/* Send battery voltage */
+#define SEND_BAT_VOLTAGE_TO_HOST 	do{uint8 buf[4] = {0x00,0x02,(tRelayState.BatteryVoltage >> 8)&0xff, tRelayState.BatteryVoltage&0xff};\
+													UartTransmitDataToHost(buf,4);}while(0)
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -12,15 +18,6 @@ extern BaseType_t UartTransmitDataToHost(uint8_t * Buf, uint16_t Len);
 #define V10mVolt				(10)
 #define V100mVolt				(100)
 #define	V1Volt					(V100mVolt * 10)
-
-/* Send Remote key to host */
-#define SEND_REMOTE_KEY_TO_HOST(Ch, Val)		do{uint8 buf[5] = {0x00, 0xAD, (u8)Ch, (u8)(Val >> 8), (u8)Val};\
-													UartTransmitDataToHost(buf,sizeof(buf));}while(0)
-
-/* Send battery voltage */
-#define SEND_BAT_VOLTAGE_TO_HOST 	do{uint8 buf[4] = {0x00,0x02,(BatteryVoltage >> 8)&0xff, BatteryVoltage&0xff};\
-													UartTransmitDataToHost(buf,4);}while(0)
-
 
 #define REMOTE_KEY_DELAY_TIME_PRESS			(T_1MS * 10)
 #define REMOTE_KEY_DELAY_TIME_RELEASE		(T_1MS * 10)
@@ -49,7 +46,6 @@ typedef enum
 	AD_SYNC_WORKING,
 }AdSyncStepDef;
 
-
 /*1路按键通道*/
 RemoteKeyChannelTypedef tRemoteKeyCh = 
 {
@@ -62,49 +58,17 @@ RemoteKeyChannelTypedef tRemoteKeyCh =
 	.defaultVoltage = V100mVolt * 33,
 };
 
-//RemoteKeyChannelTypedef tRemoteKeyCh1 = 
-//{
-//	.chId = 0,
-//	.chState = 0,
-//	.delayTimer = REMOTE_SIGNAL_PERIOD_TIME,
-//	.thresholdTime = REMOTE_KEY_DELAY_TIME_RELEASE,
-//	.thresholdVal = REMOTE_KEY_THRESHOLD_VAL,
-//	.valueNow = V100mVolt * 33,
-//	.defaultVoltage = V100mVolt * 33,
-//};
-//RemoteKeyChannelTypedef tRemoteKeyCh2 = 
-//{
-//	.chId = 1,
-//	.chState = 0,
-//	.delayTimer = REMOTE_SIGNAL_PERIOD_TIME,
-//	.thresholdTime = REMOTE_KEY_DELAY_TIME_RELEASE,
-//	.thresholdVal = REMOTE_KEY_THRESHOLD_VAL,	
-//	.valueNow = V100mVolt * 33,
-//	.defaultVoltage = V100mVolt * 33,
-//};
-//
-
 static AdSyncStepDef adRemoteSyncStep = AD_SYNC_INITIALIZE;
+static uint32_t PowerOnTimer;
 
-uint16_t		BatteryVoltage;
+AdcValueTypedef  tAdcValue;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 
-
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-/*****************************************************************************
-**Name:		 	AdcRemoteStartCalibrate
-**Function:	 	开始方控校准
-**Args:
-**Return:
-******************************************************************************/
-void AdcRemoteStartCalibrate(void)
-{
-	adRemoteSyncStep = AD_SYNC_INITIALIZE;
-	ResetUserTimer(&PowerOnTimer);
-}
 
 /*****************************************************************************
 **Name:		 	GetAdcValue
@@ -141,25 +105,6 @@ uint32_t GetChannelVol(uint8 chId)
 
 	/* 方控通道AD值 */
 	return GetAdcValue((AdcChannelTypedef)chId) * vddaValue/ 4095;;
-}
-
-/*****************************************************************************
-**Name:		 	CheckBatteryVol
-**Function:	实时检测电池电压
-**Args:
-**Return:
-******************************************************************************/
-void CheckBatteryVol(void)
-{
-	static uint32_t AutoSendTimer;
-
-	BatteryVoltage = GetChannelVol(tRemoteKeyCh.chId);
-
-	if(ReadUserTimer(&AutoSendTimer) > T_1S * 1)
-	{
-		SEND_BAT_VOLTAGE_TO_HOST; 
-		ResetUserTimer(&AutoSendTimer);
-	}
 }
 
 /*****************************************************************************
@@ -248,6 +193,7 @@ void GetRemoteChannelStableVol(RemoteKeyChannelTypedef *remoteChx)
 	return;
 }
 
+#if 0
 /*****************************************************************************
 **Name:		 	GetRemoteChannelDefaultVol
 **Function:	 	获取方控通道的默认电压
@@ -411,7 +357,42 @@ void CheckRemoteKey(void)
 			ResetUserTimer(&PowerOnTimer);
 			break;
 	}
+}
 
+/*****************************************************************************
+**Name:		 	AdcRemoteStartCalibrate
+**Function:	 	开始方控校准
+**Args:
+**Return:
+******************************************************************************/
+void AdcRemoteStartCalibrate(void)
+{
+	adRemoteSyncStep = AD_SYNC_INITIALIZE;
+	ResetUserTimer(&PowerOnTimer);
+}
+
+#endif
+/*****************************************************************************
+**Name:		 	CheckBatteryVol
+**Function:	实时检测电池电压
+**Args:
+**Return:
+******************************************************************************/
+void CheckBatteryVol(void)
+{
+	static uint32_t AutoSendTimer;
+
+	//取稳定值
+	GetRemoteChannelStableVol(&tRemoteKeyCh);
+	tRelayState.BatteryVoltage = tRemoteKeyCh.valueNow;
+
+	//tRelayState.BatteryVoltage = GetChannelVol(tRemoteKeyCh.chId);
+
+	if(ReadUserTimer(&AutoSendTimer) > T_1S * 1)
+	{
+		SEND_BAT_VOLTAGE_TO_HOST; 
+		ResetUserTimer(&AutoSendTimer);
+	}
 }
 
 /*****************************************************************************
@@ -423,7 +404,7 @@ void CheckRemoteKey(void)
 void CheckStatus(void)
 {
 	//以按键方式检测
-	CheckRemoteKey();
+	//CheckRemoteKey();
 
 	//实时检测ADC
 	CheckBatteryVol();

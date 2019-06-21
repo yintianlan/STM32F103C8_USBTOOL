@@ -1,10 +1,10 @@
-#ifndef _CHECKSTATUS_H_
-#define _CHECKSTATUS_H_
+#ifndef _CHECKADC_H_
+#define _CHECKADC_H_
 
-#ifndef		_checkStatus_GLOBAL_
-    #define		checkStatus_GLOBAL_		extern
+#ifndef		_checkAdc_GLOBAL_
+    #define		checkAdc_GLOBAL_		extern
 #else
-    #define		checkStatus_GLOBAL_
+    #define		checkAdc_GLOBAL_
 #endif
 
 #define ADC_CONVERTED_DATA_BUFFER_SIZE		(2)
@@ -25,10 +25,10 @@ typedef struct
 	uint32_t Value[ADC_CONVERTED_DATA_BUFFER_SIZE];
 }AdcValueTypedef;
 
+extern AdcValueTypedef  tAdcValue;
 
 
-checkStatus_GLOBAL_ void CheckStatus(void);
-checkStatus_GLOBAL_ void AdcRemoteStartCalibrate(void);
+checkAdc_GLOBAL_ void CheckStatus(void);
+checkAdc_GLOBAL_ void AdcRemoteStartCalibrate(void);
 
-#endif
-
+#endif	/*_CHECKADC_H_*/

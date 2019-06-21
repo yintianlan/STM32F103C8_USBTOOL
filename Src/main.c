@@ -30,7 +30,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "slaveTool.h"
-#include "checkStatus.h"
 
 /* USER CODE END Includes */
 
@@ -52,7 +51,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-extern AdcValueTypedef		tAdcValue;
 
 /* USER CODE END PV */
 

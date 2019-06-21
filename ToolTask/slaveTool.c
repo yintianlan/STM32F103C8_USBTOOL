@@ -8,21 +8,8 @@
 /* USER CODE BEGIN PTD */
 structSysData *const 	tpDataInfo = ((structSysData *)(PARAMETER_START_ADDR));	//256 bytes to store system parameters
 
-
-typedef enum
-{
-  RELAYState_ON = 0,     // (公共端——常闭)
-  RELAYState_OFF,        // (公共端——常开)  
-}RELAYState_TypeDef;
-
-typedef struct
-{
-	uint8 RemoteChooseState;
-	uint8 LineState;
-	uint8 ColumnState;
-}structRelayState;
-
 structRelayState tRelayState;
+
 
 /* USER CODE END PTD */
 
@@ -668,13 +655,13 @@ void McuBasicTaskProc(void)
 
 }
 
-/**
-  * @brief  配置逆初始化,系统调用.
-  * @retval Null.
-  */
-void McuDeInit(void)
-{
-}
+///**
+//  * @brief  配置逆初始化,系统调用.
+//  * @retval Null.
+//  */
+//void McuDeInit(void)
+//{
+//}
 
 /**
   * @brief  初始化,系统调用.
@@ -686,9 +673,6 @@ void McuInit(void)
 
 	tpDataInfo->RemoteCh1[0] = REMOTE1;
 	tpDataInfo->RemoteCh2[0] = REMOTE2;
-
-	//开始方控校准
-	AdcRemoteStartCalibrate();
 
 	//clear the reset flags
 	__HAL_RCC_CLEAR_RESET_FLAGS();

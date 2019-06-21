@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include "def.h"
 
-#include "checkStatus.h"
+#include "checkAdc.h"
 
 
 #if DEBUG
@@ -47,16 +47,31 @@
 /*系统保留的参数分区，不被编译器分配*/
 typedef struct
 {
-	unsigned int RebootState;
-	unsigned int BootCmd;
 	unsigned short SetVolValue;
 	unsigned char SetRemoteCh;
 	unsigned char RemoteCh1[3];
 	unsigned char RemoteCh2[3];
 }structSysData;
 
-extern structSysData *const tpDataInfo;
+/* 继电器工作状态 */
+typedef enum
+{
+  RELAYState_ON = 0,     // (公共端——常闭)
+  RELAYState_OFF,        // (公共端——常开)  
+}RELAYState_TypeDef;
 
+/* 继电器矩阵状态 */
+typedef struct
+{
+	uint8	RemoteChooseState;
+	uint8	LineState;
+	uint8	ColumnState;
+	uint16_t	BatteryVoltage;
+}structRelayState;
+
+/*外部引用*/
+extern structSysData *const tpDataInfo;
+extern structRelayState tRelayState;
 
 
 /* 函数接口 */
