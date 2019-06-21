@@ -31,15 +31,13 @@
 #define 	T_1MM		(T_1S*60)
 /* 定义时间基准 */
 
-#define PASS (0)
-#define FAIL (1)
+#define	HEART_TIME_OUT	T_1S*15
+#define	PASS (0)
+#define	FAIL (1)
 
 /* Chip parameters ------------------------------------------------------------*/
-#define 	FLASH_BASE_ADDR							(0x08000000)
-#define 	FLASH_USER_START_ADDR					(0x08002800)
-#define 	SYSTEM_BASE_ADDR						(FLASH_USER_START_ADDR + 0x100)
 #define 	SRAM_SIZE								(0x5000)		/*芯片SRAM大小，STM32F103C8 Sram = 20k*/
-#define		FLASH_SIZE								(0x10000)		/*芯片flash大小，STM32F103C8  64k*/
+#define 	FLASH_SIZE								(0x10000)		/*芯片flash大小，STM32F103C8  64k*/
 #define 	SRAM_BASE_ADDR							(0x20000000)
 #define 	PARAMETER_START_ADDR					(SRAM_BASE_ADDR + SRAM_SIZE - 0x100)
 /* ---------------------------------------------------------------------------- */

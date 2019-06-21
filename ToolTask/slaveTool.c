@@ -10,7 +10,6 @@ structSysData *const 	tpDataInfo = ((structSysData *)(PARAMETER_START_ADDR));	//
 
 structRelayState tRelayState;
 
-
 /* USER CODE END PTD */
 
 /* Private variables ---------------------------------------------------------*/
@@ -170,7 +169,7 @@ void Read_GPIO_Init(void)
 void SendHeartBeatToHost(void)
 {
 	/*心跳*/
-	uint8 sendBuf[] = {0x01, 0x01, 0xFF};
+	uint8 sendBuf[] = {0x00, 0x01, 0xFF};
 	static uint32_t sendTimer;
 
 	if(ReadUserTimer(&sendTimer) >= T_100MS * 10)
@@ -191,14 +190,19 @@ void IsHeartBroken(void)
 {
 	if(heartFlag == FALSE)
 	{
-		ResetUserTimer(&PingSendTimer);
+		/*heart time out, reboot system*/
+		if(ReadUserTimer(&PingSendTimer) >= HEART_TIME_OUT)
+		{
+			dbgprintf("heart time out, reboot system.\n");
+			ResetUserTimer(&PingSendTimer);
+			HAL_NVIC_SystemReset();
+		}
 	}
 	else
 	{
-		if((heartFlag == TRUE) && (ReadUserTimer(&PingSendTimer) >= T_1S * 15))
-		{
-			heartFlag = FALSE;
-		}
+		/*clear flag*/
+		heartFlag = FALSE;
+		ResetUserTimer(&PingSendTimer);
 	}
 }
 
@@ -428,7 +432,7 @@ void SetRelayPro(uint8_t sLine, uint8_t sColumn)
 		result = FAIL;
 	}
 	
-	uint8_t ack[] = {0x0A, 0x01, result};
+	uint8_t ack[] = {0xA1, 0x01, result};
 	UartTransmitDataToHost(ack, sizeof(ack));
 }
 
@@ -454,7 +458,7 @@ void SetRemotePro(uint8_t channel)
 		result = HAL_GPIO_ReadPin(REMOTE_CHOOSE_GPIO_Port, REMOTE_CHOOSE_Pin) == GPIO_PIN_RESET ? PASS : FAIL;
 	}
 
-	uint8_t ack[] = {0x0A, 0x0D, result};
+	uint8_t ack[] = {0xA1, 0x0D, result};
 	UartTransmitDataToHost(ack, sizeof(ack));
 }
 
@@ -477,7 +481,7 @@ void SetVolCalibValue(uint32_t value)
 		result = FAIL;
 	}
 
-	uint8_t ack[] = {0x0A, 0xAD, result};
+	uint8_t ack[] = {0xA1, 0xAD, result};
 	UartTransmitDataToHost(ack, sizeof(ack));
 }
 
@@ -491,7 +495,7 @@ void GetRelayState(void)
 {
 	RELAY_GetState();
 
-	uint8_t ack[] = {0x0B, 0x02, tRelayState.LineState, tRelayState.ColumnState};
+	uint8_t ack[] = {0xB1, 0x02, tRelayState.LineState, tRelayState.ColumnState};
 	UartTransmitDataToHost(ack, sizeof(ack));
 }
 
@@ -507,20 +511,25 @@ void GetRemoteCHState(void)
 
 	ChannalNum = tRelayState.RemoteChooseState;
 
-	uint8_t ack[] = {0x0B, 0x03, ChannalNum};
+	uint8_t ack[] = {0xB1, 0x03, ChannalNum};
 	UartTransmitDataToHost(ack, sizeof(ack));
 }
 
 /*****************************************************************************
-**Name:		 	
-**Function:	 	
+**Name:		 	GetRemoteValue
+**Function:	 	请求AD值
 **Args:
 **Return:
 ******************************************************************************/
 void GetRemoteValue(void)
 {
+	uint8 ADC_H,ADC_L;
 
+	ADC_H = tRelayState.BatteryVoltage >> 8;
+	ADC_L = tRelayState.BatteryVoltage & 0xff;
 
+	uint8_t ack[] = {0xB1, 0x04, ADC_H, ADC_L};
+	UartTransmitDataToHost(ack, sizeof(ack));
 }
 
 
@@ -539,19 +548,19 @@ void HostCmdProcess(uint8_t *Buf, uint16_t Len)
 	
 	switch(Cmd[0])
 	{
-		case 0x00:
-		{
-			if((Cmd[1] == 0x01) && (Cmd[2] == 0x01))
-			{
-				/*Got ping*/
-				uint8_t ack[] = {0x01, 0x01, 0x00};
-				dbgprintf("Got ping...\n");
-				UartTransmitDataToHost(ack, sizeof(ack));
-			}
-		}
-		break;
+//		case 0x00:
+//		{
+//			if((Cmd[1] == 0x01) && (Cmd[2] == 0x01))
+//			{
+//				/*Got ping*/
+//				uint8_t ack[] = {0x01, 0x01, 0x00};
+//				dbgprintf("Got ping...\n");
+//				UartTransmitDataToHost(ack, sizeof(ack));
+//			}
+//		}
+//		break;
 
-		case 0x01:
+		case 0x00:
 		{
 			if(Cmd[1] == 0xFF)
 			{
@@ -567,7 +576,7 @@ void HostCmdProcess(uint8_t *Buf, uint16_t Len)
 		}
 		break;
 
-		case 0x0A:
+		case 0xA0:
 		{
 			//设置方控的导通
 			if(Cmd[1] == 0x01)
@@ -594,7 +603,7 @@ void HostCmdProcess(uint8_t *Buf, uint16_t Len)
 		}
 		break;
 
-		case 0x0B:
+		case 0xB0:
 		{
 			//获取当前的导通状态
 			if(Cmd[1] == 0x02)
@@ -622,7 +631,7 @@ void HostCmdProcess(uint8_t *Buf, uint16_t Len)
 		case 0xAC:
 		{
 			//上位机心跳应答
-			if((Cmd[1] == 0x01) && (Cmd[2] == 0x01) && (Cmd[3] == 0xFF))
+			if((Cmd[1] == 0x00) && (Cmd[2] == 0x01) && (Cmd[3] == 0xFF))
 			{
 				heartFlag = TRUE;
 				ResetUserTimer(&PingSendTimer);
@@ -670,7 +679,6 @@ void McuBasicTaskProc(void)
 void McuInit(void)
 {
 	tpDataInfo->SetVolValue = 3300;
-
 	tpDataInfo->RemoteCh1[0] = REMOTE1;
 	tpDataInfo->RemoteCh2[0] = REMOTE2;
 
